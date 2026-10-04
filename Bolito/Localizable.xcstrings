@@ -888,6 +888,40 @@
         }
       }
     },
+    "tasks.tags.reuse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reuse a tag from this Board"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizar uma tag deste Board"
+          }
+        }
+      }
+    },
+    "tasks.tags.reuse.action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add tag"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar tag"
+          }
+        }
+      }
+    },
     "tasks.view" : {
       "extractionState" : "manual",
       "localizations" : {

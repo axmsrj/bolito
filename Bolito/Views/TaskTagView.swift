@@ -25,6 +25,7 @@ struct TaskTagChip: View {
 
 struct TaskTagEditor: View {
     @Binding var tags: [TaskTag]
+    let suggestions: [TaskTag]
     let localizer: AppLocalizer
 
     @State private var tagName = ""
@@ -70,6 +71,38 @@ struct TaskTagEditor: View {
                 }
                 .scrollIndicators(.hidden)
             }
+
+            if !availableSuggestions.isEmpty {
+                Text(verbatim: localizer.string("tasks.tags.reuse"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        ForEach(availableSuggestions) { tag in
+                            Button {
+                                tags.append(tag)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus.circle.fill")
+                                    TaskTagChip(tag: tag)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(
+                                localizer.string("tasks.tags.reuse.action") + " " + tag.name
+                            )
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+            }
+        }
+    }
+
+    private var availableSuggestions: [TaskTag] {
+        suggestions.filter { suggestion in
+            !containsTag(named: suggestion.name)
         }
     }
 

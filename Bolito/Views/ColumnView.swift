@@ -20,6 +20,8 @@ struct ColumnView: View {
     @AppStorage("appLanguage") private var appLanguage = AppLanguage.system.rawValue
     
     @State private var isCreateTaskModalOpen = false
+    @State private var isRenameColumnModalOpen = false
+    @State private var renamedColumnTitle = ""
     @State private var newTaskTitle = ""
     @State private var newTaskDetails = ""
     @State private var newTaskTags: [TaskTag] = []
@@ -50,6 +52,19 @@ struct ColumnView: View {
 
     private var localizer: AppLocalizer {
         AppLocalizer(language: AppLanguage(rawValue: appLanguage) ?? .system)
+    }
+
+    private var availableBoardTags: [TaskTag] {
+        guard let board = column.board else { return [] }
+
+        var uniqueTags: [String: TaskTag] = [:]
+        for tag in board.columns.flatMap(\.tasks).flatMap(\.taskTags) {
+            uniqueTags[tag.id] = tag
+        }
+
+        return uniqueTags.values.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
     }
     
     var body: some View {
@@ -185,7 +200,7 @@ struct ColumnView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .contextMenu {
             Button(localizer.string("columns.rename")) {
-                
+                isRenameColumnModalOpen = true
             }
             
             Divider()
@@ -198,6 +213,14 @@ struct ColumnView: View {
             createTaskSheet
                 .environment(\.locale, selectedLocale)
                 .id(appLanguage)
+        }
+        .sheet(isPresented: $isRenameColumnModalOpen) {
+            renameColumnSheet
+                .environment(\.locale, selectedLocale)
+                .id(appLanguage)
+                .onAppear {
+                    renamedColumnTitle = column.title
+                }
         }
         .sheet(item: $selectedTask) { task in
             taskDetailSheet(for: task)
@@ -399,7 +422,11 @@ struct ColumnView: View {
                 .background(Color(nsColor: .textBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            TaskTagEditor(tags: $newTaskTags, localizer: localizer)
+            TaskTagEditor(
+                tags: $newTaskTags,
+                suggestions: availableBoardTags,
+                localizer: localizer
+            )
             
             Toggle(localizer.string("tasks.dueDate.toggle"), isOn: $hasDueDate)
             
@@ -531,7 +558,11 @@ struct ColumnView: View {
                 .background(Color(nsColor: .textBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            TaskTagEditor(tags: $editTaskTags, localizer: localizer)
+            TaskTagEditor(
+                tags: $editTaskTags,
+                suggestions: availableBoardTags,
+                localizer: localizer
+            )
 
             Toggle(localizer.string("tasks.dueDate.toggle"), isOn: $editTaskHasDueDate)
 
@@ -561,5 +592,36 @@ struct ColumnView: View {
         }
         .padding()
         .frame(width: 380)
+    }
+
+    private var renameColumnSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(verbatim: localizer.string("columns.rename"))
+                .font(.headline)
+
+            TextField(
+                localizer.string("columns.name.placeholder"),
+                text: $renamedColumnTitle
+            )
+            .frame(width: 300)
+
+            HStack {
+                Spacer()
+
+                Button(localizer.string("common.cancel")) {
+                    isRenameColumnModalOpen = false
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Button(localizer.string("common.save")) {
+                    column.title = renamedColumnTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                    try? modelContext.save()
+                    isRenameColumnModalOpen = false
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(renamedColumnTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .padding()
     }
 }
