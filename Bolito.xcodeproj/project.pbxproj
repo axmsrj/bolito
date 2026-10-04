@@ -6,14 +6,24 @@
 	objectVersion = 90;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		25F2860F3071D2A100EF4798 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 25F2860E3071D2A100EF4798 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* Bolito.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bolito.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		25F2860E3071D2A100EF4798 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		000000000000000000000010 /* Bolito */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Bolito;
+			sourceTree = "<group>";
+		};
+		25F286143071D60400EF4798 /* Documentation */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Documentation;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +42,8 @@
 			children = (
 				000000000000000000000010 /* Bolito */,
 				000000000000000000000020 /* Products */,
+				25F2860E3071D2A100EF4798 /* README.md */,
+				25F286143071D60400EF4798 /* Documentation */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,6 +70,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* Bolito */,
+				25F286143071D60400EF4798 /* Documentation */,
 			);
 			name = Bolito;
 			productName = MyApp;
@@ -103,6 +116,7 @@
 		000000000000000140000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				25F2860F3071D2A100EF4798 /* README.md in Resources */,
 			);
 		};
 /* End PBXResourcesBuildPhase section */
