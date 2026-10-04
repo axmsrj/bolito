@@ -56,7 +56,7 @@ extension ColumnBackup {
 struct TaskBackup: Codable {
     let id: UUID
     let title: String
-    let details: String
+    let details: String?
     let tags: [String?]
     let position: Int16
     let dueDate: Date?
@@ -66,7 +66,7 @@ extension TaskBackup {
     init(task: Task) {
         id = task.id
         title = task.title
-        details = task.details!
+        details = task.details
         tags = task.tags
         position = task.position
         dueDate = task.dueDate

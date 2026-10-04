@@ -1,6 +1,7 @@
 import SwiftUI
 import Playgrounds
 import SwiftData
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Query var boards: [Board]
@@ -24,6 +25,11 @@ struct ContentView: View {
     // backup
     @State private var backupDocument: BackupDocument?
     @State private var isExportingBackup = false
+    @State private var isImportingBackup = false
+    @State private var pendingBackup: BolitoBackup?
+    @State private var isImportConfirmationOpen = false
+    @State private var importErrorMessage = ""
+    @State private var isImportErrorOpen = false
     private let backupService = BackupService()
     
     var body: some View {
@@ -39,7 +45,7 @@ struct ContentView: View {
                         Divider()
                         
                         Button(localizer.string("boards.delete"), role: .destructive) {
-                            modelContext.delete(board)
+                            deleteBoard(board)
                         }
                     }
                     .tag(board)
@@ -123,8 +129,44 @@ struct ContentView: View {
                     print("There was an error exporting the backup: ", error)
             }
         }
+        .fileImporter(
+            isPresented: $isImportingBackup,
+            allowedContentTypes: [.bolitoBackup, .json],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImportSelection(result)
+        }
+        .alert(
+            localizer.string("backup.import.confirmation.title"),
+            isPresented: $isImportConfirmationOpen
+        ) {
+            Button(localizer.string("backup.import.add")) {
+                importPendingBackup(replacingExistingData: false)
+            }
+
+            Button(localizer.string("backup.import.replace"), role: .destructive) {
+                importPendingBackup(replacingExistingData: true)
+            }
+
+            Button(localizer.string("common.cancel"), role: .cancel) {
+                pendingBackup = nil
+            }
+        } message: {
+            Text(verbatim: localizer.string("backup.import.confirmation.message"))
+        }
+        .alert(
+            localizer.string("backup.import.error.title"),
+            isPresented: $isImportErrorOpen
+        ) {
+            Button(localizer.string("common.close"), role: .cancel) {}
+        } message: {
+            Text(importErrorMessage)
+        }
         .focusedSceneValue(\.exportBackupAction) {
             prepareBackup()
+        }
+        .focusedSceneValue(\.importBackupAction) {
+            isImportingBackup = true
         }
     }
     
@@ -197,5 +239,70 @@ struct ContentView: View {
         } catch {
             print("There was an error preparing the backup: ", error)
         }
+    }
+
+    private func deleteBoard(_ board: Board) {
+        if selectedBoard?.id == board.id {
+            selectedBoard = nil
+        }
+
+        if boardBeingRenamed?.id == board.id {
+            boardBeingRenamed = nil
+        }
+
+        modelContext.delete(board)
+        try? modelContext.save()
+    }
+
+    private func handleImportSelection(_ result: Result<[URL], Error>) {
+        do {
+            guard let url = try result.get().first else { return }
+            let hasAccess = url.startAccessingSecurityScopedResource()
+            defer {
+                if hasAccess {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            let data = try Data(contentsOf: url)
+            pendingBackup = try backupService.decode(data)
+            isImportConfirmationOpen = true
+        } catch {
+            showImportError(error)
+        }
+    }
+
+    private func importPendingBackup(replacingExistingData: Bool) {
+        guard let pendingBackup else { return }
+
+        do {
+            let importedBoards = backupService.restoreBoards(
+                from: pendingBackup,
+                preservingIdentifiers: replacingExistingData
+            )
+
+            if replacingExistingData {
+                selectedBoard = nil
+                for board in boards {
+                    modelContext.delete(board)
+                }
+            }
+
+            for board in importedBoards {
+                modelContext.insert(board)
+            }
+
+            try modelContext.save()
+            self.pendingBackup = nil
+        } catch {
+            modelContext.rollback()
+            showImportError(error)
+        }
+    }
+
+    private func showImportError(_ error: Error) {
+        pendingBackup = nil
+        importErrorMessage = error.localizedDescription
+        isImportErrorOpen = true
     }
 }
